@@ -10,9 +10,9 @@ class Project:
     def __init__(self, base_dir):
         self.base_dir = base_dir
         self.project_dir = self.select_directory()
-        self.folder_name = input("Enter the project folder name: ").strip()
-        self.folder_path = os.path.join(self.project_dir, self.folder_name)
-        self.venv_path = os.path.join(self.folder_path, 'venv')
+        self.folder_name = input("Enter the project folder name (leave empty to use current directory): ").strip()
+        self.folder_path = self.project_dir if not self.folder_name else os.path.join(self.project_dir, self.folder_name)
+        self.venv_path = os.path.join(self.folder_path, 'venv') 
 
     def select_directory(self):
         """Prompts the user to select the directory for the project."""
@@ -45,21 +45,24 @@ class Project:
         print(f"Virtual environment created at {self.venv_path}.")
 
     def install_libraries(self):
-        """Prompts the user to enter library names and installs them."""
+        """Prompts the user to enter one or more library names (comma-separated) and installs them."""
         pip_path = os.path.join(self.venv_path, 'Scripts', 'pip.exe')
         if not os.path.exists(pip_path):
             pip_path = os.path.join(self.venv_path, 'bin', 'pip')
+
         while True:
-            library_name = input("Enter a library name to install (default is None): ").strip()
-            if library_name.lower() == '':
+            library_input = input("Enter library names to install (comma-separated, or press Enter to skip): ").strip()
+            if not library_input:
                 print("Skipping library installation.")
                 break
+
+            libraries = [lib.strip() for lib in library_input.split(',') if lib.strip()]
             try:
-                subprocess.run([pip_path, "install", library_name], check=True)
-                print(f"Successfully installed {library_name}.")
+                subprocess.run([pip_path, "install"] + libraries, check=True)
+                print(f"Successfully installed: {', '.join(libraries)}.")
             except subprocess.CalledProcessError:
-                print(f"Failed to install {library_name}. Check the spelling or try a different package.")
-                continue
+                print(f"Failed to install: {', '.join(libraries)}. Check the spelling or try different packages.")
+
 
     def create_run_script(self):
         """Creates a .bat file to activate the virtual environment and run main.py."""
